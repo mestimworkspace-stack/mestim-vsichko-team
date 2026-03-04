@@ -2,78 +2,137 @@
 <html lang="bg">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Местим всичко - Екип Про</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Montserrat:wght@700&display=swap" rel="stylesheet">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
+    <!-- CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background: #f4f7f6; margin: 0; }
-        h1, h2, h3, h4, h5, .sidebar, .fw-bold, .btn { font-family: 'Montserrat', sans-serif; }
-        .sidebar { height: 100vh; background: #1a3c5a; color: white; position: fixed; width: 240px; z-index: 1000; }
-        .sidebar a { color: white; text-decoration: none; padding: 15px 25px; display: block; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .sidebar a:hover, .sidebar a.active { background: #244d73; }
+        body { font-family: 'Inter', sans-serif; background: #f4f7f6; margin: 0; color: #334155; }
+        h1, h2, h3, h4, h5, .sidebar, .fw-bold, .btn { font-family: 'Montserrat', sans-serif; letter-spacing: -0.02em; }
+        
+        .sidebar { height: 100vh; background: #1a3c5a; color: white; position: fixed; width: 240px; z-index: 1000; transition: 0.3s; }
+        .sidebar a { color: white; text-decoration: none; padding: 15px 25px; display: block; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s; }
+        .sidebar a:hover { background: #244d73; }
+        
         .content { margin-left: 240px; padding: 25px; min-height: 100vh; }
-        #calendar { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); height: 85vh; }
-        .fc-event { cursor: pointer !important; font-size: 0.8rem; }
+        #calendar { background: white; padding: 15px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); height: 85vh; }
+        
         #loginScreen { height: 100vh; display: flex; align-items: center; justify-content: center; background: #1a3c5a; position: fixed; width: 100%; top:0; left:0; z-index: 9999; }
-        .stats-card { border: none; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        @media (max-width: 768px) { .sidebar { width: 70px; } .sidebar span { display: none; } .content { margin-left: 70px; } }
+        .stats-card { border: none; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); background: white; }
+        
+        .fc-event { cursor: pointer !important; border-radius: 6px !important; padding: 2px 4px !important; border: none !important; }
+        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); display:none; align-items:center; justify-content:center; z-index:10000; flex-direction:column; }
+        
+        @media (max-width: 768px) {
+            .sidebar { width: 60px; }
+            .sidebar span, .sidebar h4, .sidebar small { display: none; }
+            .sidebar a { text-align: center; padding: 15px 0; }
+            .sidebar i { margin: 0 !important; font-size: 1.2rem; }
+            .content { margin-left: 60px; padding: 15px; }
+        }
     </style>
 </head>
 <body>
 
+    <div id="loader">
+        <i class="fas fa-spinner fa-spin fa-3x text-primary mb-3"></i>
+        <span class="fw-bold">Синхронизиране...</span>
+    </div>
+
+    <!-- LOGIN SCREEN -->
     <div id="loginScreen">
         <div class="text-center p-5 shadow-lg rounded-4 bg-white" style="max-width: 400px; width: 90%;">
-            <i class="fas fa-user-shield fa-3x text-primary mb-3"></i>
+            <i class="fas fa-user-circle fa-4x text-primary mb-4"></i>
             <h3 class="fw-bold">Вход Екип</h3>
-            <input type="email" id="logEmail" class="form-control mb-3 py-2 text-center" placeholder="Имейл">
-            <input type="password" id="logPass" class="form-control mb-4 py-2 text-center" placeholder="Парола">
-            <button class="btn btn-primary w-100 py-2 fw-bold" onclick="tryLogin()">ВЛИЗАНЕ</button>
+            <p class="text-muted small mb-4">Местим всичко ERP</p>
+            <input type="email" id="logEmail" class="form-control mb-3 py-3 text-center rounded-pill" placeholder="Имейл">
+            <input type="password" id="logPass" class="form-control mb-4 py-3 text-center rounded-pill" placeholder="Парола">
+            <button class="btn btn-primary w-100 py-3 fw-bold rounded-pill shadow" onclick="tryLogin()">ВЛИЗАНЕ</button>
+            <div id="loginError" class="text-danger mt-3 small fw-bold"></div>
         </div>
     </div>
 
+    <!-- MAIN APP -->
     <div id="appScreen" style="display:none;">
         <div class="sidebar">
-            <div class="p-4 text-center"><h5>ЕКИП</h5><small id="uName" class="badge bg-primary"></small></div>
-            <a onclick="showPage('calendar')"><i class="fas fa-calendar-alt"></i> <span>График</span></a>
-            <a onclick="showPage('stats')"><i class="fas fa-euro-sign"></i> <span>Моите пари</span></a>
-            <a onclick="showPage('chat')"><i class="fas fa-comments"></i> <span>Чат</span></a>
-            <a onclick="location.reload()" class="text-danger mt-5"><i class="fas fa-sign-out-alt"></i> <span>Изход</span></a>
+            <div class="p-4 text-center">
+                <h5 class="fw-bold m-0">ЕКИП</h5>
+                <small id="uName" class="badge bg-primary mt-2"></small>
+            </div>
+            <a onclick="showPage('calendar')"><i class="fas fa-calendar-alt me-2"></i> <span>График</span></a>
+            <a onclick="showPage('stats')"><i class="fas fa-euro-sign me-2"></i> <span>Моите пари</span></a>
+            <a onclick="showPage('chat')"><i class="fas fa-comments me-2"></i> <span>Чат</span></a>
+            <a onclick="logout()" class="text-danger mt-5"><i class="fas fa-sign-out-alt me-2"></i> <span>Изход</span></a>
         </div>
 
         <div class="content">
+            <!-- PAGE: CALENDAR -->
             <section id="page-calendar">
-                <div class="d-flex justify-content-between mb-4"><h2>Моят График</h2><button class="btn btn-primary rounded-pill px-4" onclick="handleClockIn()">CLOCK IN ДНЕС</button></div>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fw-bold">График</h2>
+                    <button class="btn btn-primary rounded-pill px-4 shadow-sm" onclick="dailyClockIn()">
+                        <i class="fas fa-play me-2"></i>CLOCK IN ДНЕС
+                    </button>
+                </div>
                 <div id="calendar"></div>
             </section>
 
+            <!-- PAGE: STATS/MONEY -->
             <section id="page-stats" style="display:none;">
-                <h2 class="mb-4">Финансова справка</h2>
+                <h2 class="fw-bold mb-4">Финансова справка</h2>
                 <div class="row g-3 mb-4">
-                    <div class="col-6"><div class="card p-3 text-center stats-card"><h6>Изработени</h6><h3 id="stHours">0</h3><small>часа</small></div></div>
-                    <div class="col-6"><div class="card p-3 text-center stats-card text-success"><h6>За плащане</h6><h3 id="stUnpaid">0€</h3></div></div>
+                    <div class="col-6">
+                        <div class="card p-3 text-center stats-card">
+                            <h6 class="text-muted small">Изработени</h6>
+                            <h3 class="fw-bold m-0" id="stHours">0</h3>
+                            <small>часа</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card p-3 text-center stats-card text-success">
+                            <h6 class="text-muted small">За плащане</h6>
+                            <h3 class="fw-bold m-0" id="stUnpaid">0€</h3>
+                            <small>обща сума</small>
+                        </div>
+                    </div>
                 </div>
+                <h6 class="fw-bold mb-3 text-muted">История на работата (Неплатени)</h6>
                 <div id="historyList"></div>
             </section>
 
+            <!-- PAGE: CHAT -->
             <section id="page-chat" style="display:none;">
-                <div id="chatBox" class="card p-3 mb-3" style="height: 70vh; overflow-y: auto;"></div>
-                <div class="input-group"><input type="text" id="chatMsg" class="form-control" placeholder="Съобщение..."><button class="btn btn-primary" onclick="sendMsg()"><i class="fas fa-paper-plane"></i></button></div>
+                <h2 class="fw-bold mb-4">Чат</h2>
+                <div id="chatBox" class="card p-3 mb-3 border-0 shadow-sm" style="height: 65vh; overflow-y: auto; background: #fff;"></div>
+                <div class="input-group shadow-sm">
+                    <input type="text" id="chatMsg" class="form-control border-0 py-3" placeholder="Съобщение...">
+                    <button class="btn btn-primary px-4" onclick="sendMsg()"><i class="fas fa-paper-plane"></i></button>
+                </div>
             </section>
         </div>
     </div>
 
     <!-- MODALS -->
-    <div class="modal fade" id="orderModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content p-4 rounded-4 shadow" id="modalDetails"></div></div></div>
-    <div class="modal fade" id="checkModal" data-bs-backdrop="static" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content p-4 rounded-4 shadow">
+    <div class="modal fade" id="orderModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content p-4 rounded-4 border-0 shadow-lg" id="modalDetails"></div></div></div>
+    
+    <div class="modal fade" id="checkModal" data-bs-backdrop="static" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content p-4 rounded-4 border-0 shadow-lg text-center">
         <h4 class="fw-bold mb-4">Край на работа</h4>
-        <label>Имаше ли униформа?</label><select id="q1" class="form-select mb-3"><option>Да</option><option>Не</option></select>
-        <label>Работа с екипа?</label><select id="q2" class="form-select mb-4"><option>Лека</option><option>Нормална</option><option>Трудна</option></select>
-        <button class="btn btn-success w-100 py-3 rounded-pill fw-bold" onclick="finishWork()">ИЗПРАТИ И ПРИКЛЮЧИ</button>
+        <input type="hidden" id="curOrderId">
+        <div class="text-start">
+            <label class="small fw-bold mb-1">Имаше ли униформа днес?</label>
+            <select id="q_uniform" class="form-select mb-3"><option value="Да">Да</option><option value="Не">Не</option></select>
+            
+            <label class="small fw-bold mb-1">Как беше работата с екипа?</label>
+            <select id="q_team" class="form-select mb-4"><option value="Лека">Лека</option><option value="Нормална">Нормална</option><option value="Трудна">Трудна</option></select>
+        </div>
+        <button class="btn btn-success w-100 py-3 rounded-pill fw-bold shadow" onclick="submitClockOut()">ИЗПРАТИ И ПРИКЛЮЧИ</button>
     </div></div></div>
 
+    <!-- SCRIPTS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/bg.js"></script>
@@ -87,20 +146,35 @@
         async function tryLogin() {
             const email = document.getElementById('logEmail').value.trim();
             const pass = document.getElementById('logPass').value.trim();
+            if(!email || !pass) return;
+            toggleLoader(true);
             try {
-                const resp = await fetch(`${API_URL}?email=${email}&pass=${pass}&action=getEmployeeOrders`);
+                const resp = await fetch(`${API_URL}?email=${email}&pass=${pass}`);
                 const data = await resp.json();
-                if(data.error) throw new Error();
+                if(data.error) throw new Error(data.error);
                 appData = data;
+                localStorage.setItem('mestim_team_email', email);
+                localStorage.setItem('mestim_team_pass', pass);
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('appScreen').style.display = 'block';
                 document.getElementById('uName').innerText = data.user.Name;
                 renderAll();
-            } catch(e) { Swal.fire('Грешка', 'Невалидни данни!', 'error'); }
+                setTimeout(() => { if(calendar) { calendar.render(); calendar.updateSize(); } }, 300);
+            } catch(e) { document.getElementById('loginError').innerText = "Грешен имейл или парола!"; }
+            toggleLoader(false);
         }
 
+        function logout() { localStorage.clear(); location.reload(); }
+        window.onload = () => { 
+            const e = localStorage.getItem('mestim_team_email');
+            const p = localStorage.getItem('mestim_team_pass');
+            if(e && p) { tryLogin(); } 
+        };
+
         function renderAll() {
+            // CALENDAR (TIME BLOCKS LIKE ADMIN)
             const el = document.getElementById('calendar');
+            if (calendar) calendar.destroy();
             calendar = new FullCalendar.Calendar(el, {
                 initialView: 'dayGridMonth', locale: 'bg',
                 headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
@@ -109,32 +183,70 @@
                     start: `${o.Date}T${o.Time_Start_Plan}`,
                     end: o.Time_End_Plan ? `${o.Date}T${o.Time_End_Plan}` : null,
                     color: SERVICE_COLORS[o.Service] || '#1a3c5a',
-                    extendedProps: o
+                    allDay: false, extendedProps: o
                 })),
                 eventClick: (i) => showOrder(i.event.extendedProps)
             });
             calendar.render();
 
+            // STATS & MONEY
             document.getElementById('stHours').innerText = appData.stats.totalHours;
             document.getElementById('stUnpaid').innerText = appData.stats.unpaidEur + "€";
-            document.getElementById('historyList').innerHTML = appData.stats.history.map(h => `<div class="card p-2 mb-2 small d-flex justify-content-between flex-row"><span>${h.Date || h.Clock_In}</span><b>${h.Total_Pay_Eur}€</b></div>`).join('');
+            
+            document.getElementById('historyList').innerHTML = appData.stats.history.filter(h => h.Payment_Status === "Unpaid").map(h => {
+                const bonuses = Number(h.Driver_Bonus || 0) + Number(h.Coord_Bonus || 0) + Number(h.Extra_Bonus || 0);
+                const fine = Number(h.Fine_Penalty || 0);
+                return `
+                <div class="card p-3 mb-2 stats-card">
+                    <div class="d-flex justify-content-between mb-1">
+                        <b>${h.Clock_In.split(' ')[0]}</b>
+                        <span class="text-primary fw-bold">${h.Total_Pay_Eur} €</span>
+                    </div>
+                    <div class="small text-muted">
+                        ${bonuses > 0 ? `<span class="text-success">+${bonuses}€ Бонуси</span>` : ''}
+                        ${fine > 0 ? `<span class="text-danger">-${fine}€ Глоба</span>` : ''}
+                        <span class="float-end">Статус: ${h.Payment_Status}</span>
+                    </div>
+                </div>`;
+            }).join('');
+
+            // CHAT
+            const chatBox = document.getElementById('chatBox');
+            chatBox.innerHTML = appData.messages.map(m => `
+                <div class="mb-2 ${m.Sender_ID === appData.user.Name ? 'text-end' : ''}">
+                    <div class="d-inline-block p-2 rounded-3 shadow-sm ${m.Sender_ID === appData.user.Name ? 'bg-primary text-white' : 'bg-light'}" style="max-width: 80%;">
+                        <small class="d-block fw-bold" style="font-size: 0.6rem;">${m.Sender_ID}</small>
+                        ${m.Message}
+                    </div>
+                </div>
+            `).join('');
+            chatBox.scrollTop = chatBox.scrollHeight;
         }
 
         function showOrder(o) {
+            const team = appData.assignments.filter(a => String(a.Order_ID) === String(o.ID_Order))
+                         .map(a => appData.employees.find(e => String(e.ID_Emp) === String(a.Emp_ID))?.Name || "Колега").join(', ');
+            
             document.getElementById('modalDetails').innerHTML = `
-                <h4 class="fw-bold" style="color:${SERVICE_COLORS[o.Service]}">${o.Service}</h4>
-                <p><b>Клиент:</b> ${o.Client_ID}<br><b>Тел:</b> <a href="tel:${o.Phone}">${o.Phone}</a></p>
-                <p><b>Адрес:</b> ${o.Address_Start} &rarr; ${o.Address_End}</p>
-                <p><b>Екип:</b> ${o.TeamMembers}</p>
-                <div class="d-grid gap-2 mt-3">
-                    <button class="btn btn-primary py-3 rounded-pill fw-bold" onclick="clockIn('${o.ID_Order}')">СТАРТ</button>
-                    <button class="btn btn-danger py-3 rounded-pill fw-bold" onclick="openCheck('${o.ID_Order}')">КРАЙ</button>
+                <h4 class="fw-bold text-primary mb-3">${o.Service}</h4>
+                <div class="mb-4 small">
+                    <p class="mb-1"><b>Клиент:</b> ${o.Client_ID}</p>
+                    <p class="mb-1"><b>Тел:</b> <a href="tel:${o.Phone}" class="fw-bold text-decoration-none">${o.Phone} <i class="fas fa-phone-alt ms-1"></i></a></p>
+                    <p class="mb-1"><b>Час:</b> ${o.Time_Start_Plan} - ${o.Time_End_Plan || '---'}</p>
+                    <p class="mb-1"><b>ОТ:</b> ${o.Address_Start}</p>
+                    <p class="mb-1"><b>ДО:</b> ${o.Address_End}</p>
+                    <p class="mb-1 text-success"><b>Екип:</b> ${team}</p>
+                    <p class="small text-muted bg-light p-2 rounded mt-2"><b>Описание:</b> ${o.Description || '-'}</p>
+                </div>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary py-3 rounded-pill fw-bold" onclick="clockIn('${o.ID_Order}')">СТАРТ НА ОБЕКТА</button>
+                    <button class="btn btn-outline-danger py-3 rounded-pill fw-bold" onclick="openCheck('${o.ID_Order}')">КРАЙ НА ОБЕКТА</button>
                 </div>
             `;
             new bootstrap.Modal(document.getElementById('orderModal')).show();
         }
 
-        function handleClockIn() {
+        async function dailyClockIn() {
             const today = new Date().toISOString().split('T')[0];
             const todayOrder = appData.orders.find(o => o.Date === today);
             if(!todayOrder) return Swal.fire('Няма поръчка', 'Днес нямате назначена работа в графика.', 'info');
@@ -144,20 +256,44 @@
         async function clockIn(id) {
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 const gps = pos.coords.latitude + "," + pos.coords.longitude;
+                toggleLoader(true);
                 await fetch(API_URL, {method:'POST', mode:'no-cors', body:JSON.stringify({action:"clockIn", OrderId:id, EmpId:appData.user.ID_Emp, GPS:gps})});
-                Swal.fire('Успех', 'Работата започна!', 'success');
-            }, () => Swal.fire('GPS?', 'Моля, пуснете локацията!', 'error'));
+                location.reload();
+            }, () => Swal.fire('Грешка', 'Моля, пуснете GPS достъпа!', 'error'));
         }
 
-        function openCheck(id) { bootstrap.Modal.getInstance(document.getElementById('orderModal')).hide(); document.getElementById('curId').value = id; new bootstrap.Modal(document.getElementById('checkModal')).show(); }
+        function openCheck(id) {
+            bootstrap.Modal.getInstance(document.getElementById('orderModal')).hide();
+            document.getElementById('curOrderId').value = id;
+            new bootstrap.Modal(document.getElementById('checkModal')).show();
+        }
 
-        async function finishWork() {
-            const d = { action:"clockOut", OrderId:document.getElementById('curId').value, EmpId:appData.user.ID_Emp, uniform:document.getElementById('q1').value, teamWork:document.getElementById('q2').value };
+        async function submitClockOut() {
+            const d = { 
+                action:"clockOut", 
+                OrderId:document.getElementById('curOrderId').value, 
+                EmpId:appData.user.ID_Emp, 
+                uniform:document.getElementById('q_uniform').value, 
+                teamWork:document.getElementById('q_team').value 
+            };
+            toggleLoader(true);
             await fetch(API_URL, {method:'POST', mode:'no-cors', body:JSON.stringify(d)});
             location.reload();
         }
 
-        function showPage(p) { document.querySelectorAll('section').forEach(s => s.style.display='none'); document.getElementById('page-'+p).style.display='block'; if(p==='calendar') calendar.updateSize(); }
+        async function sendMsg() {
+            const t = document.getElementById('chatMsg').value; if(!t) return;
+            await fetch(API_URL, {method:'POST', mode:'no-cors', body:JSON.stringify({action:"sendMessage", senderName: appData.user.Name, text: t})});
+            document.getElementById('chatMsg').value = '';
+            location.reload();
+        }
+
+        function showPage(p) {
+            document.querySelectorAll('section').forEach(s => s.style.display='none');
+            document.getElementById('page-'+p).style.display='block';
+            if(p==='calendar') { setTimeout(() => { calendar.render(); calendar.updateSize(); }, 100); }
+        }
+        function toggleLoader(s) { document.getElementById('loader').style.display = s ? 'flex' : 'none'; }
     </script>
 </body>
 </html>
